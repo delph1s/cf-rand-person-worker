@@ -51,8 +51,40 @@ function authorizeAdmin(request, authType, authToken) {
 }
 
 function getRandomCountry() {
-  const countries = ["US", "UK", "FR", "DE", "CN", "TW", "HK", "JP", "IN", "AU", "BR", "CA", "RU", "ZA", "MX", "KR", "IT", "ES", "TR", "SA", "AR", "EG", "NG", "ID"];
+  const countries = ["US", "UK", "FR", "DE", "CN", "TW", "HK", "JP", "SG", "IN", "AU", "BR", "CA", "RU", "ZA", "MX", "KR", "IT", "ES", "TR", "SA", "AR", "EG", "NG", "ID"];
   return countries[Math.floor(Math.random() * countries.length)];
+}
+
+function getCountryCodes() {
+  const countries = [
+    { name: "United States 美国", code: "US" },
+    { name: "United States Oregon 美国俄勒冈州", code: "US.OR" },
+    { name: "United Kingdom 英国", code: "UK" },
+    { name: "France 法国", code: "FR" },
+    { name: "Germany 德国", code: "DE" },
+    { name: "China 中国", code: "CN" },
+    { name: "Taiwan 中国台湾", code: "TW" },
+    { name: "Hong Kong 中国香港", code: "HK" },
+    { name: "Japan 日本", code: "JP" },
+    { name: "Singapore 新加坡", code: "SG" },
+    { name: "India 印度", code: "IN" },
+    { name: "Australia 澳大利亚", code: "AU" },
+    { name: "Brazil 巴西", code: "BR" },
+    { name: "Canada 加拿大", code: "CA" },
+    { name: "Russia 俄罗斯", code: "RU" },
+    { name: "South Africa 南非", code: "ZA" },
+    { name: "Mexico 墨西哥", code: "MX" },
+    { name: "South Korea 韩国", code: "KR" },
+    { name: "Italy 意大利", code: "IT" },
+    { name: "Spain 西班牙", code: "ES" },
+    { name: "Turkey 土耳其", code: "TR" },
+    { name: "Saudi Arabia 沙特阿拉伯", code: "SA" },
+    { name: "Argentina 阿根廷", code: "AR" },
+    { name: "Egypt 埃及", code: "EG" },
+    { name: "Nigeria 尼日利亚", code: "NG" },
+    { name: "Indonesia 印度尼西亚", code: "ID" }
+  ];
+  return countries;
 }
 
 function isSupportCountry(country) {
@@ -66,6 +98,7 @@ function isSupportCountry(country) {
     "TW": true,
     "HK": true,
     "JP": true,
+    "SG": true,
     "IN": true,
     "AU": true, 
     "BR": true, 
@@ -111,6 +144,7 @@ function getRandomLocationInCountry(country) {
     "TW": [{ lat: 25.0330, lng: 121.5654 }, { lat: 22.6273, lng: 120.3014 }],
     "HK": [{ lat: 22.3193, lng: 114.1694 },{ lat: 22.3964, lng: 114.1095 }],
     "JP": [{ lat: 35.6895, lng: 139.6917 }, { lat: 34.6937, lng: 135.5023 }],
+    "SG": [{ lat: 1.3365, lng: 103.7002 }, { lat: 1.3500, lng: 103.8738 }],
     "IN": [{ lat: 28.6139, lng: 77.2090 }, { lat: 19.0760, lng: 72.8777 }],
     "AU": [{ lat: -33.8688, lng: 151.2093 }, { lat: -37.8136, lng: 144.9631 }], 
     "BR": [{ lat: -23.5505, lng: -46.6333 }, { lat: -22.9068, lng: -43.1729 }], 
@@ -146,6 +180,7 @@ function getDZPath(country) {
     "TW": "/tw-address",
     "HK": "/hk-address",
     "JP": "/jp-address",
+    "SG": "/sg-address",
     // "IN": "/in-address",
     "AU": "/au-address", 
     // "BR": "/br-address", 
@@ -208,6 +243,12 @@ function getRandomPhoneNumber(country) {
       const areaCode = Math.floor(10 + Math.random() * 90).toString();
       const number = Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
       return `+81 ${areaCode} ${number}`;
+    },
+    "SG": () => {
+      const options = [6, 8, 9];
+      const prefix = options[Math.floor(Math.random() * options.length)];
+      const number = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join('');
+      return `+65 ${prefix} ${number}`;
     },
     "IN": () => {
       const prefix = Math.floor(700 + Math.random() * 100).toString();
@@ -315,7 +356,7 @@ async function handleRequest(request, env) {
 
   const countrySupported = isSupportCountry(country);
   if (!countrySupported.status) {
-    return new Response(JSON.stringify({ error: true, detail: "Country not support", allCountries: countrySupported.allCountries }), { status: 400 });
+    return new Response(JSON.stringify({ error: true, detail: "Country not support", allCountries: getCountryCodes() }), { status: 400 });
   } 
 
   let address, person;
@@ -378,6 +419,9 @@ async function handleRequest(request, env) {
       person["telephone"] = data.address.Telephone || getRandomPhoneNumber(country);
       // person["telephone"] = getRandomPhoneNumber(country);
       person["ssn"] = data.address.Social_Security_Number || "";
+      person["cardType"] = data.address.Credit_Card_Type || "";
+      person["cardNum"] = data.address.Credit_Card_Number || "";
+      person["cardCVV"] = data.address.CVV2 || "";
     } else {
       person = {
         firstName: "Zhi",
@@ -385,6 +429,9 @@ async function handleRequest(request, env) {
         gender: "Male",
         telephone: getRandomPhoneNumber(country),
         ssn: "",
+        cardType: "",
+        cardNum: "",
+        cardCVV: "",
       };
     }
   } else {
@@ -394,6 +441,9 @@ async function handleRequest(request, env) {
       gender: "Male",
       telephone: getRandomPhoneNumber(country),
       ssn: "",
+      cardType: "",
+      cardNum: "",
+      cardCVV: "",
     };
   }
 
@@ -415,35 +465,8 @@ async function handleRequest(request, env) {
     telephone: person.telephone.replace(/[()\s-]/g, ''),
     // ssn: person.ssn.replace(/[()\s-]/g, ''),
     ssn: person.ssn,
+    cardType: person.cardType,
+    cardNum: person.cardNum,
+    cardCVV: person.cardCVV,
   }), { status: 200 });
-}
-
-function getCountryOptions(selectedCountry) {
-  const countries = [
-    { name: "United States 美国", code: "US" },
-    { name: "United Kingdom 英国", code: "UK" },
-    { name: "France 法国", code: "FR" },
-    { name: "Germany 德国", code: "DE" },
-    { name: "China 中国", code: "CN" },
-    { name: "Taiwan 中国台湾", code: "TW" },
-    { name: "Hong Kong 中国香港", code: "HK" }, 
-    { name: "Japan 日本", code: "JP" },
-    { name: "India 印度", code: "IN" },
-    { name: "Australia 澳大利亚", code: "AU" },
-    { name: "Brazil 巴西", code: "BR" },
-    { name: "Canada 加拿大", code: "CA" },
-    { name: "Russia 俄罗斯", code: "RU" },
-    { name: "South Africa 南非", code: "ZA" },
-    { name: "Mexico 墨西哥", code: "MX" },
-    { name: "South Korea 韩国", code: "KR" },
-    { name: "Italy 意大利", code: "IT" },
-    { name: "Spain 西班牙", code: "ES" },
-    { name: "Turkey 土耳其", code: "TR" },
-    { name: "Saudi Arabia 沙特阿拉伯", code: "SA" },
-    { name: "Argentina 阿根廷", code: "AR" },
-    { name: "Egypt 埃及", code: "EG" },
-    { name: "Nigeria 尼日利亚", code: "NG" },
-    { name: "Indonesia 印度尼西亚", code: "ID" }
-  ]
-  return countries.map(({ name, code }) => `<option value="${code}" ${code === selectedCountry ? 'selected' : ''}>${name}</option>`).join('')
 }
